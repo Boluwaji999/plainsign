@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The only network access allowed is the token-balance check on the RPC in config.js.
+       Nothing you paste is ever sent anywhere. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://rpc.mainnet.chain.robinhood.com; base-uri 'none'; form-action 'none'">
+  <title>Plainsign — read it before you sign it</title>
+  <meta name="description" content="Paste a wallet signature request or transaction and get a plain-English explanation with a drain-risk warning. Runs 100% in your browser.">
+  <meta name="theme-color" content="#4f6bff">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234f6bff'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 11' stroke='white' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css?v=11">
+</head>
+<body>
+  <!-- Decorative animated background -->
+  <div class="bg" aria-hidden="true">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="grid"></div>
+  </div>
+
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+
+  <header class="site" id="site-header">
+    <div class="wrap bar">
+      <a class="brand" href="#top">
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        Plainsign
+        <span class="beta">Beta</span>
+      </a>
+      <nav class="topnav" aria-label="Main">
+        <a href="#tool" data-goto="explain">Check a request</a>
+        <a href="#how">How it works</a>
+        <a href="#tool" data-goto="signed">Emergency</a>
+        <a href="#tool" data-goto="unlock">Unlock</a>
+      </nav>
+      <button id="wallet-btn" class="wallet-btn" type="button">Connect wallet</button>
+    </div>
+    <div class="scroll-bar" id="scroll-bar" aria-hidden="true"></div>
+  </header>
+
+  <main>
+    <!-- ================= Hero ================= -->
+    <section class="hero wrap" id="top">
+      <div class="hero-copy">
+        <span class="eyebrow"><span class="pulse-dot" aria-hidden="true"></span>Wallet drain protection · runs 100% in your browser</span>
+        <h1>Read it <span class="grad">before</span> you sign it.</h1>
+        <p class="lede">Plainsign turns cryptic wallet requests into plain English, spots drainer tricks in a second, and tells you exactly what to do if something already went wrong.</p>
+        <div class="cta">
+          <a class="primary btn-lg" href="#tool" data-goto="explain">
+            Check a request
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="ghost btn-lg" href="#tool" data-goto="signed">I already signed something</a>
+        </div>
+        <ul class="trust">
+          <li><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>No sign-up</li>
+          <li><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>No data collected</li>
+          <li><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Open source</li>
+        </ul>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true"></div>
+    </section>
+
+    <!-- ================= Stats ================= -->
+    <section class="stats wrap reveal-group" aria-label="Plainsign at a glance">
+      <div class="stat reveal"><span class="num" data-count="11">11</span><span class="stat-label">attack types detected</span></div>
+      <div class="stat reveal"><span class="num" data-count="64">64</span><span class="stat-label">contracts verified on-chain</span></div>
+      <div class="stat reveal"><span class="num" data-count="7">7</span><span class="stat-label">chains covered</span></div>
+      <div class="stat reveal"><span class="num">0</span><span class="stat-label">bytes of your data sent</span></div>
+    </section>
+
+    <!-- ================= Tool ================= -->
+    <section class="tool wrap" id="tool">
+      <div class="section-head reveal">
+        <span class="kicker">The tool</span>
+        <h2 data-words>Paste it. Understand it. Decide.</h2>
+        <p>Works with signature requests, transactions, and messages from any EVM wallet.</p>
+      </div>
+
+      <nav class="tabs reveal" role="tablist" aria-label="Tools">
+        <button type="button" role="tab" id="tabbtn-explain" data-tab="explain" aria-controls="tab-explain" aria-selected="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Explain a request
+        </button>
+        <button type="button" role="tab" id="tabbtn-signed" data-tab="signed" aria-controls="tab-signed" aria-selected="false" class="tab-urgent">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3l9.5 17h-19L12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4M12 17.2v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          I already signed it
+        </button>
+        <button type="button" role="tab" id="tabbtn-unlock" data-tab="unlock" aria-controls="tab-unlock" aria-selected="false">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Unlock more
+        </button>
+      </nav>
+
+      <!-- ================= Explain a request ================= -->
+      <div id="tab-explain" class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-explain">
+        <section class="panel input-panel spot scrub-scale">
+          <label for="input">Signature request, transaction data, or message</label>
+          <textarea id="input" spellcheck="false" autocomplete="off" placeholder="Paste JSON (eth_signTypedData), calldata (0x…), or a message to sign"></textarea>
+          <div class="row">
+            <button id="analyze" class="primary" type="button">Explain it</button>
+            <button id="clear" class="ghost" type="button">Clear</button>
+            <span class="hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
+            <button id="quota" class="quota" type="button"></button>
+          </div>
+          <div class="examples">
+            <span class="examples-label">Try an example:</span>
+            <div id="examples" class="chips"></div>
+          </div>
+        </section>
+
+        <section id="result" class="result" hidden aria-live="polite"></section>
+
+        <section class="find-request reveal">
+          <h3>Where do I find the request?</h3>
+          <ul class="steps">
+            <li>In your wallet's confirmation screen, look for a <strong>Data</strong>, <strong>Hex</strong>, or <strong>View raw</strong> tab and copy what it shows.</li>
+            <li>For a message to sign, copy the message text itself.</li>
+            <li>Developers: copy the request object (<code>method</code> + <code>params</code>) from your dapp or the browser console.</li>
+          </ul>
+          <p class="note">Coming next: a browser extension that does this automatically, before your wallet pops up.</p>
+        </section>
+      </div>
+
+      <!-- ================= I already signed it ================= -->
+      <div id="tab-signed" class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-signed" hidden>
+        <section class="emergency">
+          <div class="urgent-banner">
+            <strong>Act now — minutes matter.</strong>
+            Drainers often use a stolen permission within seconds, but not always. If anything is still in your wallet, start with step 1 immediately.
+          </div>
+
+          <ol class="guide">
+            <li>
+              <h3>Is your whole wallet compromised?</h3>
+              <p>Your wallet is <strong>fully compromised</strong> if you did any of these:</p>
+              <ul>
+                <li>Typed or pasted your seed phrase or private key into a website, form, or "support" chat</li>
+                <li>Signed a raw hash (<code>eth_sign</code>)</li>
+                <li>Approved an EIP-7702 "upgrade" or delegation that a website asked for</li>
+              </ul>
+              <p>If so, <strong>skip straight to step 3</strong>. Revoking will not help, because the attacker controls the wallet itself.</p>
+            </li>
+            <li>
+              <h3>Cut off the attacker's access</h3>
+              <p>If you only signed an approval, permit, or listing, revoke it. Revoking costs a small gas fee. Use a revoke tool such as <a href="https://revoke.cash" target="_blank" rel="noopener noreferrer">revoke.cash</a> or your wallet's own approvals page.</p>
+              <ul>
+                <li><strong>Token approval:</strong> revoke the approval for the spender you don't recognise.</li>
+                <li><strong>Permit2 signature:</strong> revoke the token's approval to the <em>Uniswap Permit2</em> contract (<code>0x0000…8BA3</code>). That cancels every Permit2 permission for that token, including the one you signed.</li>
+                <li><strong>Plain permit (gasless approval):</strong> it can't be cancelled directly. Move that token to a new wallet (step 3). Once the balance is gone, the permit is useless.</li>
+                <li><strong>NFT "approve all":</strong> turn off the collection approval for the unknown operator.</li>
+                <li><strong>NFT listing (OpenSea, Blur):</strong> cancel your listings on that marketplace. On OpenSea, use "Cancel all listings".</li>
+              </ul>
+            </li>
+            <li>
+              <h3>Move what's left to a brand-new wallet</h3>
+              <p>Create a <strong>new wallet with a new seed phrase</strong>. A new account inside the same wallet shares the same seed, so it is not safe. Move the most valuable assets first.</p>
+              <p class="warn">If gas money you send to the old wallet disappears immediately, a "sweeper bot" holds your key. Stop sending funds to it. Only specialist rescue methods (for example, Flashbots bundles) can get assets out, so get help from a well-known security community, never from a stranger who contacts you.</p>
+            </li>
+            <li>
+              <h3>Watch out for recovery scams</h3>
+              <p>Anyone who messages you offering to "recover your funds" is almost certainly a scammer. Real helpers never ask for your seed phrase, a "fee" up front, or remote access to your computer.</p>
+            </li>
+            <li>
+              <h3>Record and report</h3>
+              <p>Save the website address, screenshots, and transaction hashes. Report the scam address at <a href="https://www.chainabuse.com" target="_blank" rel="noopener noreferrer">chainabuse.com</a>, tell the community or project that was impersonated, and file a police report. In the US, also report at <a href="https://www.ic3.gov" target="_blank" rel="noopener noreferrer">ic3.gov</a>.</p>
+            </li>
+          </ol>
+        </section>
+      </div>
+
+      <!-- ================= Unlock more ================= -->
+      <div id="tab-unlock" class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-unlock" hidden>
+        <section class="panel member spot" id="member" aria-live="polite"></section>
+
+        <section class="unlock-info">
+          <h3>What holding unlocks</h3>
+          <div class="tiers">
+            <article class="tier spot">
+              <h4>Free</h4>
+              <p class="tier-min">No tokens needed</p>
+              <ul>
+                <li>Red / amber / green verdict on every request, <strong>always</strong></li>
+                <li>The one-line reason for every warning</li>
+                <li><span data-free-limit>3</span> detailed reports per day</li>
+                <li>The emergency guide</li>
+              </ul>
+            </article>
+            <article class="tier spot" data-tier="guard">
+              <h4>Guard</h4>
+              <p class="tier-min" data-min="guard"></p>
+              <ul>
+                <li><strong>Unlimited</strong> detailed reports</li>
+                <li>"Already signed?" advice on every high-risk result</li>
+              </ul>
+            </article>
+            <article class="tier spot featured" data-tier="shield">
+              <span class="tier-tag">Popular</span>
+              <h4>Shield</h4>
+              <p class="tier-min" data-min="shield"></p>
+              <ul>
+                <li>Everything in Guard</li>
+                <li>Address-poisoning protection <span class="soon">Extension · soon</span></li>
+                <li>Custom rules <span class="soon">Extension · soon</span></li>
+              </ul>
+            </article>
+            <article class="tier spot" data-tier="vault">
+              <h4>Vault</h4>
+              <p class="tier-min" data-min="vault"></p>
+              <ul>
+                <li>Everything in Shield</li>
+                <li>Multi-wallet watch <span class="soon">Extension · soon</span></li>
+                <li>Early access to new features</li>
+              </ul>
+            </article>
+          </div>
+
+          <h3>Is connecting safe?</h3>
+          <ul class="steps">
+            <li>Connecting only shares your <strong>wallet address</strong>, which Plainsign uses to read your token balance on <span data-chain-name>Robinhood Chain</span>.</li>
+            <li>Plainsign will <strong>never</strong> ask you to sign a message, approve a token, or send a transaction to unlock perks. If anything claiming to be Plainsign does, it's a scam.</li>
+            <li>What you paste into Plainsign still never leaves your browser.</li>
+          </ul>
+        </section>
+      </div>
+    </section>
+
+    <!-- ================= How it works ================= -->
+    <section class="how" id="how">
+     <!-- scroll.js pins this section and plays the stage as you scroll through the track -->
+     <div class="how-track" id="how-track">
+      <div class="how-pin wrap">
+      <div class="how-copy">
+      <div class="section-head reveal">
+        <span class="kicker">How it works</span>
+        <h2>From unreadable to obvious in under a second</h2>
+      </div>
+      <div class="steps-grid reveal-group" id="how-steps">
+        <span class="how-rail" aria-hidden="true"><i id="how-rail-fill"></i></span>
+        <article class="step-card spot reveal">
+          <span class="step-num">01</span>
+          <span class="step-icon"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><rect x="6" y="4" width="12" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 4.5h6M9 10h6M9 14h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <h3>Paste the request</h3>
+          <p>Copy what your wallet shows (raw data, hex, or the message) and paste it in.</p>
+        </article>
+        <article class="step-card spot reveal">
+          <span class="step-num">02</span>
+          <span class="step-icon"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <h3>Decoded on your device</h3>
+          <p>Plainsign reads every field, checks 64 verified contracts, and runs its drain rules. Nothing is uploaded.</p>
+        </article>
+        <article class="step-card spot reveal">
+          <span class="step-num">03</span>
+          <span class="step-icon"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.5-3 8-7 9.5-4-1.5-7-5-7-9.5V6l7-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.8 12.2l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <h3>Get a clear verdict</h3>
+          <p>Green, amber or red, with the reason in plain English and what to do next.</p>
+        </article>
+      </div>
+      </div>
+
+      <!-- Scroll-driven illustration of the three steps -->
+      <div class="how-stage" id="how-stage" aria-hidden="true">
+        <div class="stage-card">
+          <div class="demo-head">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="demo-site"><span id="stage-status">Paste a request</span></span>
+          </div>
+          <div class="stage-body">
+            <div class="stage-lines" id="stage-lines">
+              <div class="sl"><code><b>primaryType:</b> "PermitBatch"</code><span class="sl-dec">Token permission</span></div>
+              <div class="sl sl-bad"><code><b>spender:</b> 0x7a3f…c91e</code><span class="sl-dec">Unknown address</span></div>
+              <div class="sl"><code><b>token:</b> 0xA0b8…eB48</code><span class="sl-dec">Your USDC</span></div>
+              <div class="sl sl-bad"><code><b>amount:</b> 14615016373…</code><span class="sl-dec">Unlimited</span></div>
+              <div class="sl sl-bad"><code><b>expiration:</b> 2814749767…</code><span class="sl-dec">Never expires</span></div>
+              <span class="stage-scan" id="stage-scan"></span>
+            </div>
+            <div class="stage-verdict" id="stage-verdict">
+              <span class="dv-icon">✕</span>
+              <div>
+                <strong>High risk — this could drain your wallet</strong>
+                <p>Lets an unknown address take all your USDC, forever.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+     </div>
+    </section>
+
+    <!-- ================= Why ================= -->
+    <section class="why wrap">
+      <div class="section-head reveal">
+        <span class="kicker">Why it matters</span>
+        <h2 data-words>Signatures are where wallets get drained</h2>
+      </div>
+      <div class="cards">
+        <article class="feature spot scrub">
+          <span class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+          <h3>No gas, no warning</h3>
+          <p>Signing a message is free and nothing shows up on-chain, so it feels harmless. But a signed permit or order can be used later to take your tokens or NFTs.</p>
+        </article>
+        <article class="feature spot scrub">
+          <span class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <h3>Permissions outlive the moment</h3>
+          <p>Approvals and permits often have no limit and no expiry. A site you used once can still move your funds months later.</p>
+        </article>
+        <article class="feature spot scrub">
+          <span class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3 7c3-2 15-2 18 0 0 6-3 11-9 11S3 13 3 7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 11h2M14 11h2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+          <h3>Names can be faked</h3>
+          <p>The app name inside a request is written by the website. Plainsign checks the actual contract addresses instead.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ================= Emergency band ================= -->
+    <section class="wrap">
+      <div class="cta-band scrub">
+        <div>
+          <h2>Signed something you shouldn't have?</h2>
+          <p>Minutes matter. Our step-by-step guide shows you how to cut off access and save what's left.</p>
+        </div>
+        <a class="primary btn-lg danger-btn" href="#tool" data-goto="signed">Open the emergency guide</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap foot">
+      <div class="foot-brand">
+        <a class="brand" href="#top">
+          <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          Plainsign
+        </a>
+        <p>Read it before you sign it. Open-source wallet drain protection that runs entirely in your browser.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Product</h4>
+        <a href="#tool" data-goto="explain">Check a request</a>
+        <a href="#tool" data-goto="signed">Emergency guide</a>
+        <a href="#tool" data-goto="unlock">Unlock more</a>
+      </div>
+      <div class="foot-col">
+        <h4>Safety promise</h4>
+        <p>Plainsign never asks you to sign, approve, or send anything.</p>
+        <p>What you paste never leaves your browser.</p>
+      </div>
+    </div>
+    <div class="wrap foot-bottom">
+      <p>Beta software. A green result is not a guarantee. When in doubt, reject the request.</p>
+    </div>
+  </footer>
+
+  <script src="config.js?v=11"></script>
+  <script src="known.js?v=11"></script>
+  <script src="decoder.js?v=11"></script>
+  <script src="access.js?v=11"></script>
+  <script src="app.js?v=11"></script>
+  <script src="effects.js?v=11"></script>
+  <script src="bg3d.js?v=11"></script>
+  <script src="scroll.js?v=11"></script>
+</body>
+</html>
